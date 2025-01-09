@@ -1,0 +1,6 @@
+venv
+.env
+__pycache__
+.idea
+.git
+base_user.db
