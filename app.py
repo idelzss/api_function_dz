@@ -1,53 +1,37 @@
 from typing import List
 from fastapi import FastAPI, HTTPException
-from schema import UserSchema, UpdateUser
+from schema import UserSchema
 from database.base import session
 from database.User_base import User
+from utils_bcrypt import verify_password, hash_password
+
 
 
 
 app = FastAPI()
 
 
-@app.get("/users")
-async def get_users():
-    users = session.query(User).all()
-    return users
-
-
-@app.post("/users")
-async def create_user(user_data: UserSchema):
+@app.post("/register")
+async def registration(user: UserSchema):
+    hashed_password = hash_password(user.password)
     new_user = User(
-        username=user_data.username,
-        email=user_data.email,
-        age=user_data.age
-
+        username=user.username,
+        email=user.email,
+        password=hashed_password
     )
+
     session.add(new_user)
     session.commit()
-    return {"message": "successful!"}
-
-@app.put("/users/{user_id}")
-async def update_user(user_id: int, update_user: UpdateUser):
-    user = session.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    for key, value in update_user.dict(exclude_unset=True).items():
-        setattr(user, key, value)
-
-    session.commit()
-    session.refresh(user)
-    return user
+    return {"message": "User registered successfully"}
 
 
-@app.delete("/users/{user_id}")
-async def delete_user(user_id: int):
-     user = session.query(User).filter(User.id == user_id).first()
-     if not user:
-         raise HTTPException(status_code=404, detail="User not found")
+@app.post("/login")
+async def login(user: UserSchema):
+    db_user = session.query(User).filter(User.username == user.username,
+                                         User.email == user.email
+                                         ).first()
 
-     session.delete(user)
-     session.commit()
-     return {"message": "successful!"}
+    if not db_user or not verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=401, detail="Invalid username or password or email")
 
+    return {"message": f"Welcome, {user.username}!"}

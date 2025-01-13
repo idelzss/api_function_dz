@@ -8,10 +8,9 @@ class User(BASE):
 
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
-    email = Column(String, unique=True)
-    age = Column(Integer)
-
+    username = Column(String, unique=True, nullable=False)
+    password = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
 
 
 
